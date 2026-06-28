@@ -193,13 +193,12 @@
     <script>
         const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQwQQX4mjoXxy_xlq7bu57qq5RPdGZ76R46_G7WdJ9Y_-7OyEv5Lp9GUFWg7PaG1LeYludu6ShXeQFX/pub?gid=0&single=true&output=csv';
 
-        // Конфигурация количества ячеек для генерации дерева
         const treeStructure = {
             'round-0': 16, 'round-1': 8, 'round-2': 4, 'round-3': 2, 'round-4': 1,
             'loser-round-1': 4, 'loser-round-2': 2, 'loser-round-3': 1
         };
 
-        // Генерация пустой верстки для всех раундов
+        // Генерация пустой верстки для сетки
         Object.keys(treeStructure).forEach(roundId => {
             const container = document.getElementById(roundId);
             const totalMatches = treeStructure[roundId];
@@ -216,77 +215,120 @@
             }
         });
 
-        // Карта распределения строк из Колонки B таблицы по конкретным местам в сетке
-        const cellMapping = [
-            // Верхняя сетка (Раунд 1, 2, 3, 4, Победитель)
-            { type: 'node', round: 'round-1', m: 0, t: 0, index: 32 },  { type: 'node', round: 'round-1', m: 0, t: 1, index: 33 },
-            { type: 'node', round: 'round-1', m: 1, t: 0, index: 34 },  { type: 'node', round: 'round-1', m: 1, t: 1, index: 35 },
-            { type: 'node', round: 'round-1', m: 2, t: 0, index: 36 },  { type: 'node', round: 'round-1', m: 2, t: 1, index: 37 },
-            { type: 'node', round: 'round-1', m: 3, t: 0, index: 38 },  { type: 'node', round: 'round-1', m: 3, t: 1, index: 39 },
-            { type: 'node', round: 'round-1', m: 4, t: 0, index: 40 },  { type: 'node', round: 'round-1', m: 4, t: 1, index: 41 },
-            { type: 'node', round: 'round-1', m: 5, t: 0, index: 42 },  { type: 'node', round: 'round-1', m: 5, t: 1, index: 43 },
-            { type: 'node', round: 'round-1', m: 6, t: 0, index: 44 },  { type: 'node', round: 'round-1', m: 6, t: 1, index: 45 },
-            { type: 'node', round: 'round-1', m: 7, t: 0, index: 46 },  { type: 'node', round: 'round-1', m: 7, t: 1, index: 47 },
-
-            { type: 'node', round: 'round-2', m: 0, t: 0, index: 48 },  { type: 'node', round: 'round-2', m: 0, t: 1, index: 49 },
-            { type: 'node', round: 'round-2', m: 1, t: 0, index: 50 },  { type: 'node', round: 'round-2', m: 1, t: 1, index: 51 },
-            { type: 'node', round: 'round-2', m: 2, t: 0, index: 52 },  { type: 'node', round: 'round-2', m: 2, t: 1, index: 53 },
-            { type: 'node', round: 'round-2', m: 3, t: 0, index: 54 },  { type: 'node', round: 'round-2', m: 3, t: 1, index: 55 },
-
-            { type: 'node', round: 'round-3', m: 0, t: 0, index: 56 },  { type: 'node', round: 'round-3', m: 0, t: 1, index: 57 },
-            { type: 'node', round: 'round-3', m: 1, t: 0, index: 58 },  { type: 'node', round: 'round-3', m: 1, t: 1, index: 59 },
-
-            { type: 'node', round: 'round-4', m: 0, t: 0, index: 60 },  { type: 'node', round: 'round-4', m: 0, t: 1, index: 61 },
-            { type: 'id', id: 'winner-name', prefix: '🏆 ', index: 62 },
-
-            // Нижняя сетка (Луз раунды 1, 2, 3 и Места)
-            { type: 'node', round: 'loser-round-1', m: 0, t: 0, index: 63 }, { type: 'node', round: 'loser-round-1', m: 0, t: 1, index: 64 },
-            { type: 'node', round: 'loser-round-1', m: 1, t: 0, index: 65 }, { type: 'node', round: 'loser-round-1', m: 1, t: 1, index: 66 },
-            { type: 'node', round: 'loser-round-1', m: 2, t: 0, index: 67 }, { type: 'node', round: 'loser-round-1', m: 2, t: 1, index: 68 },
-            { type: 'node', round: 'loser-round-1', m: 3, t: 0, index: 69 }, { type: 'node', round: 'loser-round-1', m: 3, t: 1, index: 70 },
-
-            { type: 'node', round: 'loser-round-2', m: 0, t: 0, index: 71 }, { type: 'node', round: 'loser-round-2', m: 0, t: 1, index: 72 },
-            { type: 'node', round: 'loser-round-2', m: 1, t: 0, index: 73 }, { type: 'node', round: 'loser-round-2', m: 1, t: 1, index: 74 },
-
-            { type: 'node', round: 'loser-round-3', m: 0, t: 0, index: 75 }, { type: 'node', round: 'loser-round-3', m: 0, t: 1, index: 76 },
-            { type: 'id', id: 'place-2', prefix: '🥈 ', index: 77 },
-            { type: 'id', id: 'place-3', prefix: '🥉 ', index: 78 }
-        ];
+        // Функция парсинга CSV с учетом кавычек и запятых внутри ячеек
+        function parseCSV(text) {
+            let p = '', r = [];
+            let q = false;
+            let row = [''];
+            for (let i=0; i<text.length; i++) {
+                let c = text[i];
+                if (c === '"') { q = !q; }
+                else if (c === ',' && !q) { row.push(''); }
+                else if ((c === '\r' || c === '\n') && !q) {
+                    if (c === '\r' && text[i+1] === '\n') { i++; }
+                    r.push(row);
+                    row = [''];
+                } else {
+                    row[row.length-1] += c;
+                }
+            }
+            if (row.length > 1 || row[0] !== '') r.push(row);
+            return r.map(row => row.map(cell => cell.trim()));
+        }
 
         async function updateTreeFromSheets() {
             try {
                 const response = await fetch(GOOGLE_SHEET_CSV_URL + '&cachebust=' + Date.now());
                 if (!response.ok) throw new Error('Сеть не отвечает');
-                const csvData = await response.text();
+                const csvText = await response.text();
                 
-                // Преобразуем CSV в двумерный массив [строка][колонка]
-                const rows = csvData.split(/\r?\n/).map(line => {
-                    return line.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
-                });
+                const matrix = parseCSV(csvText);
 
-                // 1. Заполняем самый первый Отборочный этап из колонки A (строки 1-32)
+                // Безопасное чтение значения из матрицы по букве колонки (A=0, B=1...) и номеру строки (1-based)
+                function getVal(colLetter, rowNum) {
+                    const colIndex = colLetter.toUpperCase().charCodeAt(0) - 65;
+                    const rowIndex = rowNum - 1;
+                    if (matrix[rowIndex] && matrix[rowIndex][colIndex]) {
+                        return matrix[rowIndex][colIndex];
+                    }
+                    return '';
+                }
+
+                // 1. Колонка A: Отборочный этап (строки со 2 по 33)
                 for (let i = 0; i < 16; i++) {
                     for (let t = 0; t < 2; t++) {
-                        const rowIndex = i * 2 + t;
-                        const teamName = (rows[rowIndex] && rows[rowIndex][0]) ? rows[rowIndex][0] : `Команда ${rowIndex + 1}`;
+                        const row = i * 2 + t + 2; // +2 чтобы начать со 2-й строки (ячейка A2)
+                        const name = getVal('A', row);
                         const el = document.querySelector(`#round-0-m${i}-t${t} .team-name`);
-                        if (el) el.innerText = teamName;
+                        if (el) el.innerText = name || `Команда ${i * 2 + t + 1}`;
                     }
                 }
 
-                // 2. Распределяем все последующие этапы из колонки B (строки с 33 по 79)
-                cellMapping.forEach(map => {
-                    // В массиве rows индексы начинаются с 0, поэтому строка 33 — это индекс 32
-                    const value = (rows[map.index] && rows[map.index][1]) ? rows[map.index][1] : '';
-                    
-                    if (map.type === 'node') {
-                        const el = document.querySelector(`#${map.round}-m${map.m}-t${map.t} .team-name`);
-                        if (el) el.innerText = value || 'Ожидание...';
-                    } else if (map.type === 'id') {
-                        const el = document.getElementById(map.id);
-                        if (el) el.innerText = value ? (map.prefix + value) : (map.prefix + 'Ожидание...');
+                // 2. Колонка B: Основной этап (строки со 2 по 17)
+                for (let i = 0; i < 8; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('B', row);
+                        const el = document.querySelector(`#round-1-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
                     }
-                });
+                }
+
+                // 3. Колонка C: Полуфинал (строки со 2 по 9)
+                for (let i = 0; i < 4; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('C', row);
+                        const el = document.querySelector(`#round-2-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 4. Колонка D: Финал (строки со 2 по 5)
+                for (let i = 0; i < 2; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('D', row);
+                        const el = document.querySelector(`#round-3-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 5. Колонка E: Гранд Финал (строки 2-3) и Победитель (строка 4)
+                setNodeOrId('round-4', 0, 0, getVal('E', 2)); // E2
+                setNodeOrId('round-4', 0, 1, getVal('E', 3)); // E3
+                
+                const winVal = getVal('E', 4); // E4
+                document.getElementById('winner-name').innerText = winVal ? "🏆 " + winVal : "🏆 Ожидание...";
+
+                // 6. Колонка F: Луз-сетка Раунд 1 (строки со 2 по 9)
+                for (let i = 0; i < 4; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('F', row);
+                        const el = document.querySelector(`#loser-round-1-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 7. Колонка G: Луз-Финал (строки со 2 по 5)
+                for (let i = 0; i < 2; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('G', row);
+                        const el = document.querySelector(`#loser-round-2-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 8. Колонка H: Луз-Гранд-Финал (строки 2-3) + Призеры (строки 4-5)
+                setNodeOrId('loser-round-3', 0, 0, getVal('H', 2)); // H2
+                setNodeOrId('loser-round-3', 0, 1, getVal('H', 3)); // H3
+                
+                const p2 = getVal('H', 4); // H4
+                document.getElementById('place-2').innerText = p2 ? "🥈 " + p2 : "🥈 2 МЕСТО";
+                const p3 = getVal('H', 5); // H5
+                document.getElementById('place-3').innerText = p3 ? "🥉 " + p3 : "🥉 3 МЕСТО";
 
                 document.getElementById('loader').style.display = 'none';
             } catch (error) {
@@ -295,7 +337,11 @@
             }
         }
 
-        // Запуск при загрузке и автообновление каждые 30 секунд
+        function setNodeOrId(round, match, team, value) {
+            const el = document.querySelector(`#${round}-m${match}-t${team} .team-name`);
+            if (el) el.innerText = value || 'Ожидание...';
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             updateTreeFromSheets();
             setInterval(updateTreeFromSheets, 30000);
