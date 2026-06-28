@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Финальная Турнирная Сетка</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1e1e22;
+            --card-border: #2d2d30;
+            --text-color: #e2e8f0;
+            --line-color: #4b5563;
+            --win-color: #22c55e;
+            --lose-color: #a855f7;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 500;
+            font-size: 20px;
+        }
+
+        .tournament-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            min-width: max-content;
+            padding: 10px;
+        }
+
+        .bracket-row {
+            display: flex;
+            gap: 40px;
+            position: relative;
+        }
+
+        .round-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 190px;
+            position: relative;
+        }
+
+        .round-header {
+            text-align: center;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #a1a1aa;
+            position: absolute;
+            top: -30px;
+            width: 100%;
+            border-bottom: 1px solid #2d2d30;
+            padding-bottom: 4px;
+        }
+
+        .match-slot {
+            display: flex;
+            flex-direction: column;
+            margin: 4px 0;
+            position: relative;
+        }
+
+        .match-table {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .team-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            font-size: 11px;
+            height: 20px;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .team-row:last-child {
+            border-bottom: none;
+        }
+
+        .team-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #cbd5e1;
+            flex-grow: 1;
+            margin-right: 4px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 2px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 0 1px;
+            transition: transform 0.1s;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .winner-table { border-left: 3px solid var(--win-color); }
+        .places-table { border-left: 3px solid var(--lose-color); }
+
+        .badge {
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+        .gold { color: var(--win-color); background: rgba(34, 197, 94, 0.1); }
+        .silver-bronze { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+
+        .grid-separator {
+            height: 1px;
+            background: #202024;
+            margin: 20px 0;
+        }
+
+        .round-column:not(:last-child) .match-slot::after {
+            content: ""; position: absolute; right: -24px; top: 50%; width: 24px; height: 1px; background: var(--line-color); z-index: 1;
+        }
+        .round-column:not(:first-child) .match-slot::before {
+            content: ""; position: absolute; left: -18px; top: 50%; width: 18px; height: 1px; background: var(--line-color); z-index: 1;
+        }
+        .lower-bracket .round-column:not(:last-child) .match-slot::after { background: var(--lose-color); }
+        .lower-bracket .round-column:not(:first-child) .match-slot::before { background: var(--lose-color); }
+        
+        #loader {
+            text-align: center;
+            color: #f59e0b;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Глобальное Tournament-Дерево</h1>
+    <div id="loader">Загрузка команд из Google Таблиц...</div>
+
+    <div class="tournament-tree">
+        
+        <div class="bracket-row">
+            <div class="round-column" id="round-0"><div class="round-header">Отборочный этап (16)</div></div>
+            <div class="round-column" id="round-1"><div class="round-header">Основной этап (8)</div></div>
+            <div class="round-column" id="round-2"><div class="round-header">Полуфинал (4)</div></div>
+            <div class="round-column" id="round-3"><div class="round-header">Финал (4 команды)</div></div>
+            <div class="round-column" id="round-4"><div class="round-header">Гранд Финал (2)</div></div>
+            <div class="round-column" id="round-5">
+                <div class="round-header">Победитель</div>
+                <div class="match-slot">
+                    <div class="match-table winner-table">
+                        <div class="team-row" style="height: 25px;">
+                            <span class="team-name" id="winner-name" style="font-weight: bold; color: #fff;">🏆 Ожидание...</span>
+                            <span class="badge gold">Чемпион</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-separator"></div>
+
+        <div class="bracket-row lower-bracket">
+            <div class="round-column" style="visibility: hidden;"></div>
+            <div class="round-column" style="visibility: hidden;"></div>
+            <div class="round-column" id="loser-round-1"><div class="round-header">Луз-сетка (4)</div></div>
+            <div class="round-column" id="loser-round-2"><div class="round-header">Луз-Финал (4 команды)</div></div>
+            <div class="round-column" id="loser-round-3"><div class="round-header">Луз-Гранд-Финал (2)</div></div>
+            <div class="round-column">
+                <div class="round-header">Призеры ЛС</div>
+                <div class="match-slot">
+                    <div class="match-table places-table">
+                        <div class="team-row"><span class="team-name" id="place-2" style="color: #fff;">🥈 2 МЕСТО</span><span class="badge silver-bronze">Серебро</span></div>
+                    </div>
+                </div>
+                <div class="match-slot">
+                    <div class="match-table places-table">
+                        <div class="team-row"><span class="team-name" id="place-3" style="color: #fff;">🥉 3 МЕСТО</span><span class="badge silver-bronze">Бронза</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Ваша прямая рабочая ссылка на CSV таблицы
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQwQQX4mjoXxy_xlq7bu57qq5RPdGZ76R46_G7WdJ9Y_-7OyEv5Lp9GUFWg7PaG1LeYludu6ShXeQFX/pub?gid=0&single=true&output=csv';
+
+        const config = {
+            'round-0': { matches: 16 },
+            'round-1': { matches: 8 },
+            'round-2': { matches: 4 },
+            'round-3': { matches: 2 },
+            'round-4': { matches: 1 },
+            'loser-round-1': { matches: 4 },
+            'loser-round-2': { matches: 2 },
+            'loser-round-3': { matches: 1 }
+        };
+
+        // Генерация пустой сетки
+        Object.keys(config).forEach(roundId => {
+            const container = document.getElementById(roundId);
+            const data = config[roundId];
+            
+            for(let i = 0; i < data.matches; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'match-slot';
+                
+                let html = `<div class="match-table">`;
+                for(let t = 0; t < 2; t++) {
+                    html += `
+                        <div class="team-row" id="${roundId}-m${i}-t${t}">
+                            <span class="team-name">Ожидание...</span>
+                            <div class="action-btns">
+                                <button class="action-btn" onclick="handleResult('${roundId}', ${i}, ${t}, 'win')">🟢</button>
+                                <button class="action-btn" onclick="handleResult('${roundId}', ${i}, ${t}, 'lose')">🔴</button>
+                            </div>
+                        </div>`;
+                }
+                html += `</div>`;
+                slot.innerHTML = html;
+                container.appendChild(slot);
+            }
+        });
+
+        // Функция автоматического импорта данных
+        async function loadTeamsFromGoogleSheets() {
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                if (!response.ok) throw new Error('Ошибка сети');
+                const data = await response.text();
+                
+                // Корректно разбиваем CSV с учётом возможных переносов строк и кавычек
+                const lines = data.split(/\r?\n/);
+                const teams = lines.map(line => line.replace(/^"|"$/g, '').trim()).filter(line => line !== "");
+
+                // Заполняем Отборочный этап (round-0)
+                for (let i = 0; i < 16; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const arrayIndex = i * 2 + t;
+                        const teamName = teams[arrayIndex] || `Команда ${arrayIndex + 1}`;
+                        setTeamName('round-0', i, t, teamName);
+                    }
+                }
+                document.getElementById('loader').style.display = 'none';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loader').innerText = "❌ Не удалось загрузить данные. Проверьте публикацию таблицы.";
+            }
+        }
+
+        function getTeamName(round, match, team) {
+            const el = document.querySelector(`#${round}-m${match}-t${team} .team-name`);
+            return el ? el.innerText : 'Ожидание...';
+        }
+
+        function setTeamName(round, match, team, name) {
+            const el = document.querySelector(`#${round}-m${match}-t${team} .team-name`);
+            if (el) el.innerText = name;
+        }
+
+        function handleResult(round, match, team, status) {
+            const currentName = getTeamName(round, match, team);
+            if (!currentName || currentName.includes('Ожидание...')) return;
+
+            if (status === 'win') {
+                if (round === 'round-0') {
+                    setTeamName('round-1', Math.floor(match / 2), match % 2, currentName);
+                } 
+                else if (round === 'round-1') {
+                    setTeamName('round-2', Math.floor(match / 2), match % 2, currentName);
+                }
+                else if (round === 'round-2') {
+                    setTeamName('round-3', Math.floor(match / 2), match % 2, currentName);
+                }
+                else if (round === 'round-3') {
+                    setTeamName('round-4', Math.floor(match / 2), match % 2, currentName);
+                }
+                else if (round === 'round-4') {
+                    document.getElementById('winner-name').innerText = "🏆 " + currentName;
+                }
+                else if (round === 'loser-round-1') {
+                    setTeamName('loser-round-2', Math.floor(match / 2), match % 2, currentName);
+                }
+                else if (round === 'loser-round-2') {
+                    setTeamName('loser-round-3', Math.floor(match / 2), match % 2, currentName);
+                }
+                else if (round === 'loser-round-3') {
+                    setTeamName('round-4', 0, 1, currentName);
+                }
+            } 
+            else if (status === 'lose') {
+                if (round === 'round-1') { 
+                    setTeamName('loser-round-1', Math.floor(match / 2), match % 2, currentName);
+                }
+                else if (round === 'round-4') {
+                    document.getElementById('place-2').innerText = "🥈 " + currentName;
+                }
+                else if (round === 'loser-round-3') {
+                    document.getElementById('place-3').innerText = "🥉 " + currentName;
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadTeamsFromGoogleSheets);
+    </script>
+</body>
+</html>
