@@ -104,24 +104,6 @@
             margin-right: 4px;
         }
 
-        .action-btns {
-            display: flex;
-            gap: 2px;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 11px;
-            padding: 0 1px;
-            transition: transform 0.1s;
-        }
-
-        .action-btn:hover {
-            transform: scale(1.2);
-        }
-
         .winner-table { border-left: 3px solid var(--win-color); }
         .places-table { border-left: 3px solid var(--lose-color); }
 
@@ -160,7 +142,7 @@
 <body>
 
     <h1>Глобальное Tournament-Дерево</h1>
-    <div id="loader">Загрузка команд из Google Таблиц...</div>
+    <div id="loader">Синхронизация с Google Таблицей...</div>
 
     <div class="tournament-tree">
         
@@ -209,126 +191,115 @@
     </div>
 
     <script>
-        // Ваша прямая рабочая ссылка на CSV таблицы
         const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQwQQX4mjoXxy_xlq7bu57qq5RPdGZ76R46_G7WdJ9Y_-7OyEv5Lp9GUFWg7PaG1LeYludu6ShXeQFX/pub?gid=0&single=true&output=csv';
 
-        const config = {
-            'round-0': { matches: 16 },
-            'round-1': { matches: 8 },
-            'round-2': { matches: 4 },
-            'round-3': { matches: 2 },
-            'round-4': { matches: 1 },
-            'loser-round-1': { matches: 4 },
-            'loser-round-2': { matches: 2 },
-            'loser-round-3': { matches: 1 }
+        // Конфигурация количества ячеек для генерации дерева
+        const treeStructure = {
+            'round-0': 16, 'round-1': 8, 'round-2': 4, 'round-3': 2, 'round-4': 1,
+            'loser-round-1': 4, 'loser-round-2': 2, 'loser-round-3': 1
         };
 
-        // Генерация пустой сетки
-        Object.keys(config).forEach(roundId => {
+        // Генерация пустой верстки для всех раундов
+        Object.keys(treeStructure).forEach(roundId => {
             const container = document.getElementById(roundId);
-            const data = config[roundId];
+            const totalMatches = treeStructure[roundId];
             
-            for(let i = 0; i < data.matches; i++) {
+            for(let i = 0; i < totalMatches; i++) {
                 const slot = document.createElement('div');
                 slot.className = 'match-slot';
-                
-                let html = `<div class="match-table">`;
-                for(let t = 0; t < 2; t++) {
-                    html += `
-                        <div class="team-row" id="${roundId}-m${i}-t${t}">
-                            <span class="team-name">Ожидание...</span>
-                            <div class="action-btns">
-                                <button class="action-btn" onclick="handleResult('${roundId}', ${i}, ${t}, 'win')">🟢</button>
-                                <button class="action-btn" onclick="handleResult('${roundId}', ${i}, ${t}, 'lose')">🔴</button>
-                            </div>
-                        </div>`;
-                }
-                html += `</div>`;
-                slot.innerHTML = html;
+                slot.innerHTML = `
+                    <div class="match-table">
+                        <div class="team-row" id="${roundId}-m${i}-t0"><span class="team-name">Ожидание...</span></div>
+                        <div class="team-row" id="${roundId}-m${i}-t1"><span class="team-name">Ожидание...</span></div>
+                    </div>`;
                 container.appendChild(slot);
             }
         });
 
-        // Функция автоматического импорта данных
-        async function loadTeamsFromGoogleSheets() {
-            try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                if (!response.ok) throw new Error('Ошибка сети');
-                const data = await response.text();
-                
-                // Корректно разбиваем CSV с учётом возможных переносов строк и кавычек
-                const lines = data.split(/\r?\n/);
-                const teams = lines.map(line => line.replace(/^"|"$/g, '').trim()).filter(line => line !== "");
+        // Карта распределения строк из Колонки B таблицы по конкретным местам в сетке
+        const cellMapping = [
+            // Верхняя сетка (Раунд 1, 2, 3, 4, Победитель)
+            { type: 'node', round: 'round-1', m: 0, t: 0, index: 32 },  { type: 'node', round: 'round-1', m: 0, t: 1, index: 33 },
+            { type: 'node', round: 'round-1', m: 1, t: 0, index: 34 },  { type: 'node', round: 'round-1', m: 1, t: 1, index: 35 },
+            { type: 'node', round: 'round-1', m: 2, t: 0, index: 36 },  { type: 'node', round: 'round-1', m: 2, t: 1, index: 37 },
+            { type: 'node', round: 'round-1', m: 3, t: 0, index: 38 },  { type: 'node', round: 'round-1', m: 3, t: 1, index: 39 },
+            { type: 'node', round: 'round-1', m: 4, t: 0, index: 40 },  { type: 'node', round: 'round-1', m: 4, t: 1, index: 41 },
+            { type: 'node', round: 'round-1', m: 5, t: 0, index: 42 },  { type: 'node', round: 'round-1', m: 5, t: 1, index: 43 },
+            { type: 'node', round: 'round-1', m: 6, t: 0, index: 44 },  { type: 'node', round: 'round-1', m: 6, t: 1, index: 45 },
+            { type: 'node', round: 'round-1', m: 7, t: 0, index: 46 },  { type: 'node', round: 'round-1', m: 7, t: 1, index: 47 },
 
-                // Заполняем Отборочный этап (round-0)
+            { type: 'node', round: 'round-2', m: 0, t: 0, index: 48 },  { type: 'node', round: 'round-2', m: 0, t: 1, index: 49 },
+            { type: 'node', round: 'round-2', m: 1, t: 0, index: 50 },  { type: 'node', round: 'round-2', m: 1, t: 1, index: 51 },
+            { type: 'node', round: 'round-2', m: 2, t: 0, index: 52 },  { type: 'node', round: 'round-2', m: 2, t: 1, index: 53 },
+            { type: 'node', round: 'round-2', m: 3, t: 0, index: 54 },  { type: 'node', round: 'round-2', m: 3, t: 1, index: 55 },
+
+            { type: 'node', round: 'round-3', m: 0, t: 0, index: 56 },  { type: 'node', round: 'round-3', m: 0, t: 1, index: 57 },
+            { type: 'node', round: 'round-3', m: 1, t: 0, index: 58 },  { type: 'node', round: 'round-3', m: 1, t: 1, index: 59 },
+
+            { type: 'node', round: 'round-4', m: 0, t: 0, index: 60 },  { type: 'node', round: 'round-4', m: 0, t: 1, index: 61 },
+            { type: 'id', id: 'winner-name', prefix: '🏆 ', index: 62 },
+
+            // Нижняя сетка (Луз раунды 1, 2, 3 и Места)
+            { type: 'node', round: 'loser-round-1', m: 0, t: 0, index: 63 }, { type: 'node', round: 'loser-round-1', m: 0, t: 1, index: 64 },
+            { type: 'node', round: 'loser-round-1', m: 1, t: 0, index: 65 }, { type: 'node', round: 'loser-round-1', m: 1, t: 1, index: 66 },
+            { type: 'node', round: 'loser-round-1', m: 2, t: 0, index: 67 }, { type: 'node', round: 'loser-round-1', m: 2, t: 1, index: 68 },
+            { type: 'node', round: 'loser-round-1', m: 3, t: 0, index: 69 }, { type: 'node', round: 'loser-round-1', m: 3, t: 1, index: 70 },
+
+            { type: 'node', round: 'loser-round-2', m: 0, t: 0, index: 71 }, { type: 'node', round: 'loser-round-2', m: 0, t: 1, index: 72 },
+            { type: 'node', round: 'loser-round-2', m: 1, t: 0, index: 73 }, { type: 'node', round: 'loser-round-2', m: 1, t: 1, index: 74 },
+
+            { type: 'node', round: 'loser-round-3', m: 0, t: 0, index: 75 }, { type: 'node', round: 'loser-round-3', m: 0, t: 1, index: 76 },
+            { type: 'id', id: 'place-2', prefix: '🥈 ', index: 77 },
+            { type: 'id', id: 'place-3', prefix: '🥉 ', index: 78 }
+        ];
+
+        async function updateTreeFromSheets() {
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL + '&cachebust=' + Date.now());
+                if (!response.ok) throw new Error('Сеть не отвечает');
+                const csvData = await response.text();
+                
+                // Преобразуем CSV в двумерный массив [строка][колонка]
+                const rows = csvData.split(/\r?\n/).map(line => {
+                    return line.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
+                });
+
+                // 1. Заполняем самый первый Отборочный этап из колонки A (строки 1-32)
                 for (let i = 0; i < 16; i++) {
                     for (let t = 0; t < 2; t++) {
-                        const arrayIndex = i * 2 + t;
-                        const teamName = teams[arrayIndex] || `Команда ${arrayIndex + 1}`;
-                        setTeamName('round-0', i, t, teamName);
+                        const rowIndex = i * 2 + t;
+                        const teamName = (rows[rowIndex] && rows[rowIndex][0]) ? rows[rowIndex][0] : `Команда ${rowIndex + 1}`;
+                        const el = document.querySelector(`#round-0-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = teamName;
                     }
                 }
+
+                // 2. Распределяем все последующие этапы из колонки B (строки с 33 по 79)
+                cellMapping.forEach(map => {
+                    // В массиве rows индексы начинаются с 0, поэтому строка 33 — это индекс 32
+                    const value = (rows[map.index] && rows[map.index][1]) ? rows[map.index][1] : '';
+                    
+                    if (map.type === 'node') {
+                        const el = document.querySelector(`#${map.round}-m${map.m}-t${map.t} .team-name`);
+                        if (el) el.innerText = value || 'Ожидание...';
+                    } else if (map.type === 'id') {
+                        const el = document.getElementById(map.id);
+                        if (el) el.innerText = value ? (map.prefix + value) : (map.prefix + 'Ожидание...');
+                    }
+                });
+
                 document.getElementById('loader').style.display = 'none';
             } catch (error) {
                 console.error(error);
-                document.getElementById('loader').innerText = "❌ Не удалось загрузить данные. Проверьте публикацию таблицы.";
+                document.getElementById('loader').innerText = "❌ Ошибка синхронизации. Проверьте сеть.";
             }
         }
 
-        function getTeamName(round, match, team) {
-            const el = document.querySelector(`#${round}-m${match}-t${team} .team-name`);
-            return el ? el.innerText : 'Ожидание...';
-        }
-
-        function setTeamName(round, match, team, name) {
-            const el = document.querySelector(`#${round}-m${match}-t${team} .team-name`);
-            if (el) el.innerText = name;
-        }
-
-        function handleResult(round, match, team, status) {
-            const currentName = getTeamName(round, match, team);
-            if (!currentName || currentName.includes('Ожидание...')) return;
-
-            if (status === 'win') {
-                if (round === 'round-0') {
-                    setTeamName('round-1', Math.floor(match / 2), match % 2, currentName);
-                } 
-                else if (round === 'round-1') {
-                    setTeamName('round-2', Math.floor(match / 2), match % 2, currentName);
-                }
-                else if (round === 'round-2') {
-                    setTeamName('round-3', Math.floor(match / 2), match % 2, currentName);
-                }
-                else if (round === 'round-3') {
-                    setTeamName('round-4', Math.floor(match / 2), match % 2, currentName);
-                }
-                else if (round === 'round-4') {
-                    document.getElementById('winner-name').innerText = "🏆 " + currentName;
-                }
-                else if (round === 'loser-round-1') {
-                    setTeamName('loser-round-2', Math.floor(match / 2), match % 2, currentName);
-                }
-                else if (round === 'loser-round-2') {
-                    setTeamName('loser-round-3', Math.floor(match / 2), match % 2, currentName);
-                }
-                else if (round === 'loser-round-3') {
-                    setTeamName('round-4', 0, 1, currentName);
-                }
-            } 
-            else if (status === 'lose') {
-                if (round === 'round-1') { 
-                    setTeamName('loser-round-1', Math.floor(match / 2), match % 2, currentName);
-                }
-                else if (round === 'round-4') {
-                    document.getElementById('place-2').innerText = "🥈 " + currentName;
-                }
-                else if (round === 'loser-round-3') {
-                    document.getElementById('place-3').innerText = "🥉 " + currentName;
-                }
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', loadTeamsFromGoogleSheets);
+        // Запуск при загрузке и автообновление каждые 30 секунд
+        window.addEventListener('DOMContentLoaded', () => {
+            updateTreeFromSheets();
+            setInterval(updateTreeFromSheets, 30000);
+        });
     </script>
 </body>
 </html>
