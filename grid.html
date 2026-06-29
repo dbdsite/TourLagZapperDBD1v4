@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Финальная Турнирная Сетка</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1e1e22;
+            --card-border: #2d2d30;
+            --text-color: #e2e8f0;
+            --line-color: #4b5563;
+            --win-color: #22c55e;
+            --lose-color: #a855f7;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: 500;
+            font-size: 20px;
+        }
+
+        .tournament-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            min-width: max-content;
+            padding: 10px;
+        }
+
+        .bracket-row {
+            display: flex;
+            gap: 40px;
+            position: relative;
+        }
+
+        .round-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 190px;
+            position: relative;
+        }
+
+        .round-header {
+            text-align: center;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #a1a1aa;
+            position: absolute;
+            top: -30px;
+            width: 100%;
+            border-bottom: 1px solid #2d2d30;
+            padding-bottom: 4px;
+        }
+
+        .match-slot {
+            display: flex;
+            flex-direction: column;
+            margin: 4px 0;
+            position: relative;
+        }
+
+        .match-table {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .team-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            font-size: 11px;
+            height: 20px;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .team-row:last-child {
+            border-bottom: none;
+        }
+
+        .team-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #cbd5e1;
+            flex-grow: 1;
+            margin-right: 4px;
+        }
+
+        .winner-table { border-left: 3px solid var(--win-color); }
+        .places-table { border-left: 3px solid var(--lose-color); }
+
+        .badge {
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+        .gold { color: var(--win-color); background: rgba(34, 197, 94, 0.1); }
+        .silver-bronze { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+
+        .grid-separator {
+            height: 1px;
+            background: #202024;
+            margin: 20px 0;
+        }
+
+        .round-column:not(:last-child) .match-slot::after {
+            content: ""; position: absolute; right: -24px; top: 50%; width: 24px; height: 1px; background: var(--line-color); z-index: 1;
+        }
+        .round-column:not(:first-child) .match-slot::before {
+            content: ""; position: absolute; left: -18px; top: 50%; width: 18px; height: 1px; background: var(--line-color); z-index: 1;
+        }
+        .lower-bracket .round-column:not(:last-child) .match-slot::after { background: var(--lose-color); }
+        .lower-bracket .round-column:not(:first-child) .match-slot::before { background: var(--lose-color); }
+        
+        #loader {
+            text-align: center;
+            color: #f59e0b;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Сетка для Tournament-ZapperCup 1v4 DBD</h1>
+    <div id="loader">Синхронизация с Google Таблицей...</div>
+
+    <div class="tournament-tree">
+        
+        <div class="bracket-row">
+            <div class="round-column" id="round-0"><div class="round-header">Отборочный этап (16)</div></div>
+            <div class="round-column" id="round-1"><div class="round-header">Основной этап (8)</div></div>
+            <div class="round-column" id="round-2"><div class="round-header">Полуфинал (4)</div></div>
+            <div class="round-column" id="round-3"><div class="round-header">Финал (4 команды)</div></div>
+            <div class="round-column" id="round-4"><div class="round-header">Гранд Финал (2)</div></div>
+            <div class="round-column" id="round-5">
+                <div class="round-header">Победитель</div>
+                <div class="match-slot">
+                    <div class="match-table winner-table">
+                        <div class="team-row" style="height: 25px;">
+                            <span class="team-name" id="winner-name" style="font-weight: bold; color: #fff;">🏆 Ожидание...</span>
+                            <span class="badge gold">Чемпион</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-separator"></div>
+
+        <div class="bracket-row lower-bracket">
+            <div class="round-column" style="visibility: hidden;"></div>
+            <div class="round-column" style="visibility: hidden;"></div>
+            <div class="round-column" id="loser-round-1"><div class="round-header">Луз-сетка (4)</div></div>
+            <div class="round-column" id="loser-round-2"><div class="round-header">Луз-Финал (4 команды)</div></div>
+            <div class="round-column" id="loser-round-3"><div class="round-header">Луз-Гранд-Финал (2)</div></div>
+            <div class="round-column">
+                <div class="round-header">Призеры ЛС</div>
+                <div class="match-slot">
+                    <div class="match-table places-table">
+                        <div class="team-row"><span class="team-name" id="place-2" style="color: #fff;">🥈 2 МЕСТО</span><span class="badge silver-bronze">Серебро</span></div>
+                    </div>
+                </div>
+                <div class="match-slot">
+                    <div class="match-table places-table">
+                        <div class="team-row"><span class="team-name" id="place-3" style="color: #fff;">🥉 3 МЕСТО</span><span class="badge silver-bronze">Бронза</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQwQQX4mjoXxy_xlq7bu57qq5RPdGZ76R46_G7WdJ9Y_-7OyEv5Lp9GUFWg7PaG1LeYludu6ShXeQFX/pub?gid=0&single=true&output=csv';
+
+        const treeStructure = {
+            'round-0': 16, 'round-1': 8, 'round-2': 4, 'round-3': 2, 'round-4': 1,
+            'loser-round-1': 4, 'loser-round-2': 2, 'loser-round-3': 1
+        };
+
+        // Генерация пустой верстки для сетки
+        Object.keys(treeStructure).forEach(roundId => {
+            const container = document.getElementById(roundId);
+            const totalMatches = treeStructure[roundId];
+            
+            for(let i = 0; i < totalMatches; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'match-slot';
+                slot.innerHTML = `
+                    <div class="match-table">
+                        <div class="team-row" id="${roundId}-m${i}-t0"><span class="team-name">Ожидание...</span></div>
+                        <div class="team-row" id="${roundId}-m${i}-t1"><span class="team-name">Ожидание...</span></div>
+                    </div>`;
+                container.appendChild(slot);
+            }
+        });
+
+        // Функция парсинга CSV с учетом кавычек и запятых внутри ячеек
+        function parseCSV(text) {
+            let p = '', r = [];
+            let q = false;
+            let row = [''];
+            for (let i=0; i<text.length; i++) {
+                let c = text[i];
+                if (c === '"') { q = !q; }
+                else if (c === ',' && !q) { row.push(''); }
+                else if ((c === '\r' || c === '\n') && !q) {
+                    if (c === '\r' && text[i+1] === '\n') { i++; }
+                    r.push(row);
+                    row = [''];
+                } else {
+                    row[row.length-1] += c;
+                }
+            }
+            if (row.length > 1 || row[0] !== '') r.push(row);
+            return r.map(row => row.map(cell => cell.trim()));
+        }
+
+        async function updateTreeFromSheets() {
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL + '&cachebust=' + Date.now());
+                if (!response.ok) throw new Error('Сеть не отвечает');
+                const csvText = await response.text();
+                
+                const matrix = parseCSV(csvText);
+
+                // Безопасное чтение значения из матрицы по букве колонки (A=0, B=1...) и номеру строки (1-based)
+                function getVal(colLetter, rowNum) {
+                    const colIndex = colLetter.toUpperCase().charCodeAt(0) - 65;
+                    const rowIndex = rowNum - 1;
+                    if (matrix[rowIndex] && matrix[rowIndex][colIndex]) {
+                        return matrix[rowIndex][colIndex];
+                    }
+                    return '';
+                }
+
+                // 1. Колонка A: Отборочный этап (строки со 2 по 33)
+                for (let i = 0; i < 16; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2; // +2 чтобы начать со 2-й строки (ячейка A2)
+                        const name = getVal('A', row);
+                        const el = document.querySelector(`#round-0-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || `Команда ${i * 2 + t + 1}`;
+                    }
+                }
+
+                // 2. Колонка B: Основной этап (строки со 2 по 17)
+                for (let i = 0; i < 8; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('B', row);
+                        const el = document.querySelector(`#round-1-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 3. Колонка C: Полуфинал (строки со 2 по 9)
+                for (let i = 0; i < 4; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('C', row);
+                        const el = document.querySelector(`#round-2-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 4. Колонка D: Финал (строки со 2 по 5)
+                for (let i = 0; i < 2; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('D', row);
+                        const el = document.querySelector(`#round-3-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 5. Колонка E: Гранд Финал (строки 2-3) и Победитель (строка 4)
+                setNodeOrId('round-4', 0, 0, getVal('E', 2)); // E2
+                setNodeOrId('round-4', 0, 1, getVal('E', 3)); // E3
+                
+                const winVal = getVal('E', 4); // E4
+                document.getElementById('winner-name').innerText = winVal ? "🏆 " + winVal : "🏆 Ожидание...";
+
+                // 6. Колонка F: Луз-сетка Раунд 1 (строки со 2 по 9)
+                for (let i = 0; i < 4; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('F', row);
+                        const el = document.querySelector(`#loser-round-1-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 7. Колонка G: Луз-Финал (строки со 2 по 5)
+                for (let i = 0; i < 2; i++) {
+                    for (let t = 0; t < 2; t++) {
+                        const row = i * 2 + t + 2;
+                        const name = getVal('G', row);
+                        const el = document.querySelector(`#loser-round-2-m${i}-t${t} .team-name`);
+                        if (el) el.innerText = name || 'Ожидание...';
+                    }
+                }
+
+                // 8. Колонка H: Луз-Гранд-Финал (строки 2-3) + Призеры (строки 4-5)
+                setNodeOrId('loser-round-3', 0, 0, getVal('H', 2)); // H2
+                setNodeOrId('loser-round-3', 0, 1, getVal('H', 3)); // H3
+                
+                const p2 = getVal('H', 4); // H4
+                document.getElementById('place-2').innerText = p2 ? "🥈 " + p2 : "🥈 2 МЕСТО";
+                const p3 = getVal('H', 5); // H5
+                document.getElementById('place-3').innerText = p3 ? "🥉 " + p3 : "🥉 3 МЕСТО";
+
+                document.getElementById('loader').style.display = 'none';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loader').innerText = "❌ Ошибка синхронизации. Проверьте сеть.";
+            }
+        }
+
+        function setNodeOrId(round, match, team, value) {
+            const el = document.querySelector(`#${round}-m${match}-t${team} .team-name`);
+            if (el) el.innerText = value || 'Ожидание...';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateTreeFromSheets();
+            setInterval(updateTreeFromSheets, 30000);
+        });
+    </script>
+</body>
+</html>
