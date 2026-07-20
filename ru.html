@@ -85,6 +85,37 @@ footer{position:fixed;bottom:15px;width:100%;text-align:center;color:#76ffb3}
     margin:10px auto 20px;
     border-radius:12px;
 }
+.schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        .schedule-table th, .schedule-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        .schedule-table th {
+            background-color: #333;
+            color: var(--accent-color);
+        }
+        .schedule-table tr:hover {
+            background-color: #333;
+        }
+.banner-row {
+    display: flex;          /* Располагает элементы в строку */
+    gap: 20px;              /* Отступ между картинками */
+    align-items: center;    /* Выравнивание по центру по вертикали */
+    justify-content: center; /* Центрирование по горизонтали */
+    flex-wrap: wrap;        /* Перенос на новую строку на узких экранах */
+}
+
+.banner-row img {
+    width: 400px;           /* Фиксированная ширина (подберите подходящую) */
+    max-width: 100%;        /* Чтобы не выходили за пределы экрана */
+    height: auto;           /* Сохраняет пропорции */
+    display: block;         /* Убирает лишний отступ снизу */
+}        
 </style>
 </head>
 <body>
@@ -284,19 +315,75 @@ footer{position:fixed;bottom:15px;width:100%;text-align:center;color:#76ffb3}
 </div>
 
 <div class="page" id="schedule">
-<div class="section-card">
-<h1>Расписание</h1>
-<div class="content">
-<p>Пока идёт регистрация на отборочный этап, матчи проводятся сразу, как только регистрируются 4 команды. Остальное расписание будет известно, как только регистрация окончится и наступит Основной этап.</p>
-<p>В луз сетку можно попасть только из Основного этапа, если вы проиграли отборочный бб гг</p>
-<p><strong>Приблизительное время регистрации:</strong> 1 неделя.</p>
-<p><strong>Примерное расписание матчей:</strong><br>
-Регистрация — 18:00<br>
-Старт — 19:00<br>
-Финал — 22:00</p>
-</div>
-<button class="back" onclick="back()">Назад</button>
-</div>
+    <div class="section-card">
+        <h1>Расписание</h1>
+        
+        <section class="section">
+    <h2>📺 Прямая трансляция турнира на Twitch и запись на YouTube</h2>
+<br>
+    
+    <!-- Оберните ссылки в контейнер -->
+    <div class="banner-row">
+        <a href="https://www.twitch.tv/mcpleh" target="_blank">
+            <img src="https://i.postimg.cc/5y6X76vk/mcpleh-TTVdbd.gif" alt="Twitch канал mcpleh">
+        </a>
+        <a href="https://www.youtube.com/@playhangames" target="_blank">
+            <img src="https://i.postimg.cc/dtFyhw92/play-Youtu.png" alt="YouTube канал PlayHanGames">
+        </a>
+    </div>
+</section>
+<br>       
+        <section class="section">
+            <h2>📅 Расписание турнира</h2>
+            
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Этап</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Формат</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Отборочный Этап</td>
+                        <td>28.06.2025</td>
+                        <td>Начало в 19:00 МСК</td>
+                        <td>32 команд - BO2 - 16</td>
+                    </tr>
+                    <tr>
+                        <td>Основной Этап</td>
+                        <td>25.07.2025</td>
+                        <td>Начало в 15:00 МСК</td>
+                        <td>16 команд - BO2 Зеркало</td>
+                    </tr>
+                    <tr>
+                        <td>Полуфинал-ЛузСетка</td>
+                        <td>26.07.2025</td>
+                        <td>Начало в 15:00 МСК</td>
+                        <td>8 + 8 команд - BO2 Зеркало</td>
+                    </tr>
+                    <tr>
+                        <td>Финал - ЛузФинал</td>
+                        <td>01.08.2025</td>
+                        <td>Начало в 15:00 МСК</td>
+                        <td>4 + 4 команд - BO3 Зеркало</td>
+                    </tr>
+                    <tr>
+                        <td>Гранд Финал - Луз Гранд Финал</td>
+                        <td>02.08.2025</td>
+                        <td>Начало в 15:00 МСК</td>
+                        <td>4 команд - BO4 Зеркало</td>
+                    </tr>
+                </tbody>
+            </table>
+<br>          
+            <p class="note">* Время может быть скорректировано организаторами в будущем</p>
+        </section>
+        
+        <button class="back" onclick="back()">Назад</button>
+    </div>
 </div>
 
 <div class="page" id="grid">
